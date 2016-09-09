@@ -240,4 +240,6 @@ var RainDrops = function(p){
 
 }
 
-var myp = new p5(RainDrops);
+window.onload = function(){
+  var myp = new p5(RainDrops);
+}
