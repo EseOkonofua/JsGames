@@ -1,5 +1,7 @@
 var RainDrops = function(p){
 
+//******************CONSTANTS
+  //Difficulty
   const PHASES = [
     { drop:1 , freq:100,bgColor:"pink",pColor:"white",bColor:"#3366ff"},
     { drop:1.4, freq: 100,bgColor:"lightblue",pColor:"white",bColor:"#3366ff"},
@@ -9,11 +11,14 @@ var RainDrops = function(p){
     { drop:2.5, freq: 100,bgColor:"#A42CD6",pColor:"#502274",bColor:"#2F242C"}
   ];
 
+  //Game states
   const STATE = {
     PLAYING: 0,
     LOSE: 1
   }
 
+
+  //Game status attributes
   var status = {
     currentPhase: 0,
     currentState:STATE.PLAYING,
@@ -24,7 +29,7 @@ var RainDrops = function(p){
       return p.millis() - this.startTime;
     },
     lastSpawn:0,
-    spawnTimer:9000,
+    spawnTimer:Number.POSITIVE_INFINITY,
 
     player:null,
     rainDrops:[],
@@ -34,65 +39,95 @@ var RainDrops = function(p){
   }
 
 
-  //************PLAYER CLASS*********************//
-  class Player{
-    constructor(){
-      this._diameter = 45;
-      this._xVel = 3;
-      this._pos = {
-        x:p.width/2,
-        y:p.height-this._diameter/2
-      };
+//************PLAYER CLASS*********************//
+  function Player(){
+    //Private attributes
+    var diameter = 45;
+    var vel = {
+      x:3,
+      y:0
+    }
+    var pos = {
+      x:p.width/2,
+      y:p.height- diameter/2
+    };
+    var color = "white";
 
-      this._color = "white";
+    //getters and setters
+    this.getDiameter = () =>diameter;
+    this.setDiameter = dmt => diameter = dmt;
+    this.getVel = ()=> vel;
+    this.setVel = (x,y)=>{
+      vel.x = x;
+      vel.y = y;
     }
 
-    draw(){
+    this.getPos = ()=> pos;
+    this.setPos = (x,y)=>{
+      pos.x = x;
+      pos.y = y;
+    }
+
+    this.getColor  = ()=> color;
+    this.setColor = (newColor)=>{
+      if(color !== newColor) color = newColor;
+    }
+
+  }
+  Player.prototype = {
+    constructor:Player,
+    draw:function(){
+      var currPos = this.getPos();
+
       p.noStroke();
-      p.fill(this._color);
-      p.ellipse(this._pos.x,this._pos.y,this._diameter,this._diameter);
-    }
+      p.fill(this.getColor());
+      p.ellipse(currPos.x,currPos.y,this.getDiameter(),this.getDiameter());
+    },
 
-    moveRight(){
-      this._pos.x += this._xVel;
-    }
+    moveRight:function(){
+      var currPos = this.getPos();
+      var newPos = currPos.x + this.getVel().x;
+      this.setPos(newPos,currPos.y);
+    },
 
-    moveLeft(){
-      this._pos.x -= this._xVel;
-    }
-
-    setColor(color){
-      if(color !== this._color)
-        this._color = color;
-    }
-  }
-
-  //*************RAIN DROP CLASS****************//
-  class RainDrop extends Player{
-    constructor(x){
-      super();
-      this._yVel = 1;
-      this._gravity = PHASES[status.currentPhase].drop*(9.8/10000);
-      this._currTime = p.millis();
-      this._diameter =10;
-      this._pos = {
-        x:x,
-        y:0
-      };
-      this._color = PHASES[status.currentPhase].bColor;
-    }
-
-    update(){
-      let now = p.millis();
-      this._yVel = this._yVel + this._gravity*(now - this._currTime);
-      this._pos.y += this._yVel;
+    moveLeft:function(){
+      var currPos = this.getPos();
+      var newPos = currPos.x - this.getVel().x;
+      this.setPos(newPos,currPos.y);
     }
   }
 
-  //
+
+//*************RAIN DROP CLASS****************//
+  function RainDrop(difficulty,x){
+    Player.call(this);//inherit private properties
+
+    this.setVel(0,1);
+    this.setPos(x,0);
+    this.setDiameter(10);
+    this.setColor(difficulty.bColor);
+
+    var gravity = difficulty.drop*(9.8/10000);
+    var currTime = p.millis();
+
+
+    this.getGravity = ()=> gravity;
+    this.getCurrTime = ()=> currTime;
+  }
+  inheritPrototype(RainDrop,Player); //inherit prototypical attributes
+  RainDrop.prototype.update = function(){
+      var now = p.millis();
+      var currVel = this.getVel();
+      var newYVel = currVel.y + this.getGravity()*(now - this.getCurrTime());
+      this.setVel(currVel.x, newYVel);
+      this.setPos(this.getPos().x,this.getPos().y + newYVel);
+  }
+
+
+  //Game mechanic functions
   const Game = {
     spawnRainDrop:function(){
-      status.rainDrops.unshift( new RainDrop(p.random(p.width)) )
+      status.rainDrops.unshift( new RainDrop(PHASES[status.currentPhase],p.random(p.width)) );
     },
 
     circleCircleCollide:function (x, y,d, x2, y2, d2) {
@@ -109,7 +144,7 @@ var RainDrops = function(p){
       status.score=0;
       status.startTime=p.millis();
       status.lastSpawn=0;
-      status.spawnTimer=9000;
+      status.spawnTimer=Number.POSITIVE_INFINITY;
       status.player=new Player()
       status.rainDrops=[]
     }
@@ -131,19 +166,19 @@ var RainDrops = function(p){
     if(status.currentState == STATE.PLAYING){
 
       if(p.keyIsDown(p.LEFT_ARROW)){
-        if(status.player._pos.x >= status.player._diameter/2)
+        if(status.player.getPos().x >= status.player.getDiameter()/2)
           status.player.moveLeft();
       }
       if(p.keyIsDown(p.RIGHT_ARROW)){
-        if(status.player._pos.x <= p.width - status.player._diameter/2)
+        if(status.player.getPos().x <= p.width - status.player.getDiameter()/2)
           status.player.moveRight();
       }
 //**********DRAW
       status.player.draw();
 
       for(i = status.rainDrops.length-1; i>=0; i--){
-        let drop = status.rainDrops[i];
-        if(Game.circleCircleCollide(drop._pos.x,drop._pos.y,drop._diameter,status.player._pos.x,status.player._pos.y,status.player._diameter) && !status.godmode){
+        var drop = status.rainDrops[i];
+        if(Game.circleCircleCollide(drop.getPos().x,drop.getPos().y,drop.getDiameter(),status.player.getPos().x,status.player.getPos().y,status.player.getDiameter()) && !status.godmode){
           status.currentState = STATE.LOSE;
         }
         drop.draw();
@@ -151,24 +186,26 @@ var RainDrops = function(p){
 
 //********UPDATE
       for(i = status.rainDrops.length-1; i>=0; i--){
-        let drop = status.rainDrops[i];
+        var drop = status.rainDrops[i];
         drop.update();
-        if(drop._pos.y > p.height+drop._diameter/2){
+        if(drop.getPos().y > p.height+drop.getDiameter()/2){
           status.rainDrops.splice(i,1);
           status.score++;
         }
       }
 
 //*******TIME RELATED STUFF
-      let now = p.millis();
-      let elapsed = status.elapsedTime();
+      var now = p.millis();
+      var elapsed = status.elapsedTime();
 
+      //Rain spawner
       if(status.spawnTimer > PHASES[status.currentPhase].freq){
         Game.spawnRainDrop();
         status.spawnTimer = 0;
         status.lastSpawn = now;
       }
 
+      //difficulty handler
       if(elapsed >= 30000 && elapsed < 60000){ status.currentPhase = 1; status.player.setColor(PHASES[status.currentPhase].pColor)  }
       else if(elapsed >= 60000 && elapsed < 90000) { status.currentPhase= 2; status.player.setColor(PHASES[status.currentPhase].pColor)  }
       else if (elapsed >= 90000 & elapsed < 120000) { status.currentPhase = 3; status.player.setColor(PHASES[status.currentPhase].pColor)  }
@@ -203,4 +240,6 @@ var RainDrops = function(p){
 
 }
 
-var myp = new p5(RainDrops);
+window.onload = function(){
+  var myp = new p5(RainDrops);
+}
