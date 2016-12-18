@@ -117,7 +117,7 @@ var RainDrops = function(p){
 
 
   p.setup = function(){
-    var myCanvas = p.createCanvas(800,500);
+    var myCanvas = p.createCanvas(800,700);
     myCanvas.parent('canvas-container');
     p.background("pink");
 
