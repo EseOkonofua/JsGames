@@ -74,11 +74,11 @@ SpaceHipster.Game.prototype = {
 
         //player explosion will be added here
         var emitter = this.game.add.emitter(this.player.x, this.player.y, 100)
-        emitter.makeParticles('rock')
+        emitter.makeParticles('playerParticle')
         emitter.minParticleSpeed.setTo(-200, -200)
         emitter.maxParticleSpeed.setTo(200, 200)
-        emitter.gravity = 100
-        emitter.start(true, 3000, null, 100)
+        //emitter.gravity = 0
+        emitter.start(true, 1000, null, 100)
 
         this.player.kill();
         
