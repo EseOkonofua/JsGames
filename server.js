@@ -21,6 +21,11 @@ app.get("/spacehipster",function(req,res){
   res.sendFile('./index');
 });
 
+app.use('/topdown1', express.static('./TopDown1'));
+app.get("/topdown1",function(req,res){
+  res.sendFile('./index');
+});
+
 app.listen(port,function(){
   console.log("Js Games server now listening on port:",port);
 });
