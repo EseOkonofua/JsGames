@@ -3,6 +3,16 @@ var SpaceHipster = SpaceHipster || {}
 SpaceHipster.MainMenu = function(){}
 
 SpaceHipster.MainMenu.prototype = {
+    init: function(score){
+      var score = score || 0
+      if(typeof(Storage) !== 'undefined'){
+          this.highestScore = localStorage.highScore ? localStorage.highScore : 0
+      }
+      this.highestScore = this.highestScore || 0
+
+      this.highestScore = Math.max(score, this.highestScore)
+      localStorage.highScore = this.highestScore  
+    },
     create: function(){
         //show the space tile, repeated
         this.background = this.game.add.tileSprite(0,0, this.game.width, this.game.height, 'space')
